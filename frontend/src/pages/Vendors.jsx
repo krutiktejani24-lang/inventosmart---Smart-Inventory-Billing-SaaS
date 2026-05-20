@@ -73,9 +73,13 @@ function POModal({ open, onClose, vendor, onDone }) {
     if (!open) return;
     setItems([{ productId:'', qty:'1', price:'' }]); setNotes(''); setError('');
     api.get('/products?limit=100').then(r => setProducts(r.data.products || [])).catch(() => {});
-  }, [open]);
-
-  const setItem = (i, k, v) => setItems(items.map((it, idx) => idx === i ? { ...it, [k]: v } : it));
+  }, [open]);const setItem = (i, k, v) => {
+  setItems(prev =>
+    prev.map((it, idx) =>
+      idx === i ? { ...it, [k]: v } : it
+    )
+  );
+};
   const addItem = () => setItems([...items, { productId:'', qty:'1', price:'' }]);
 
   const handleSave = async () => {
@@ -126,11 +130,19 @@ function POModal({ open, onClose, vendor, onDone }) {
                     <tr key={i} className="border-b border-slate-100 last:border-0">
                       <td className="px-2 py-1.5">
                         <select className="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs outline-none"
-                          value={item.productId} onChange={e => {
-                            const p = products.find(pr => pr.id === e.target.value);
-                            setItem(i, 'productId', e.target.value);
-                            if (p) setItem(i, 'price', p.cost_price || '');
-                          }}>
+                          value={item.productId} onChange={(e) => {
+                            const value = e.target.value;
+                              const selectedProduct = products.find(
+                               (pr) => String(pr.id) === String(value)
+                              );
+                               setItems((prev) =>
+                                prev.map((it, idx) =>
+                                idx === i
+                                 ? {...it, productId: value, price: selectedProduct?.cost_price || '', }
+                                 : it
+                                )
+                              ); 
+                            }}>
                           <option value="">— Select Product —</option>
                           {products.map(p => <option key={p.id} value={p.id}>{p.name} (Stock: {p.stock_qty})</option>)}
                         </select>

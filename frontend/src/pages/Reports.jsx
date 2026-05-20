@@ -271,7 +271,7 @@ export default function Reports() {
               <span className="text-xs text-slate-400">B2B invoices (with GSTIN) + B2C summary included.</span>
             </div>
           </div>
-
+  
           {/* Inventory Valuation */}
           <div className="bg-white rounded-xl border border-slate-100 p-5">
             <div className="flex items-center justify-between mb-3">

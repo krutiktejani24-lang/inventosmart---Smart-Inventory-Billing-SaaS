@@ -14,7 +14,7 @@ const TABS = [
 /* ─── Business Profile Tab ──────────────────────────────────────── */
 function ProfileTab() {
   const { business, user, setAuth, getToken } = useAuthStore();
-  const [form, setForm]     = useState({ name:'', gstin:'', phone:'', email:'', address:'' });
+  const [form, setForm]     = useState({ name:'', gstin:'', phone:'', email:'', address:'', upi_id:'' });
   const [saving, setSaving] = useState(false);
   const [saved,  setSaved]  = useState(false);
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
@@ -25,6 +25,7 @@ function ProfileTab() {
       gstin:   business.gstin   || '',
       phone:   business.phone   || '',
       email:   business.email   || '',
+      upi_id: business.upi_id || '',
       address: business.address || '',
     });
   }, [business]);
@@ -32,7 +33,7 @@ function ProfileTab() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.put('/auth/business', form);
+      await api.put('/auth/business', form);  // includes upi_id
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (e) { alert(e.response?.data?.message || 'Save failed'); }
@@ -46,6 +47,23 @@ function ProfileTab() {
       <div className="grid grid-cols-2 gap-4">
         <div><label className="lbl">Phone</label><input className="inp" value={form.phone} onChange={e => set('phone',e.target.value)}/></div>
         <div><label className="lbl">Email</label><input className="inp" type="email" value={form.email} onChange={e => set('email',e.target.value)}/></div>
+      </div>
+      <div className="md:col-span-2">
+        <label className="lbl">UPI ID <span className="text-slate-400 font-normal">(for invoice payment QR)</span></label>
+        <div className="relative">
+          <input className="inp" value={form.upi_id} onChange={e => set('upi_id', e.target.value)}
+            placeholder="e.g. krutik@upi  or  9099731627@paytm  or  yourname@okaxis" />
+        </div>
+        {form.upi_id && (
+          <p className="text-xs text-emerald-600 mt-1">
+            ✓ UPI QR will appear on all invoices automatically
+          </p>
+        )}
+        {!form.upi_id && (
+          <p className="text-xs text-slate-400 mt-1">
+            Add your UPI ID to show a payment QR code on invoices — customers can scan and pay instantly
+          </p>
+        )}
       </div>
       <div><label className="lbl">Address</label><textarea className="inp resize-none" rows={3} value={form.address} onChange={e => set('address',e.target.value)}/></div>
       <button onClick={handleSave} disabled={saving}

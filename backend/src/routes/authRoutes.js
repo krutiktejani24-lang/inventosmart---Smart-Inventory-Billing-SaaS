@@ -7,7 +7,7 @@ const {
   getMe,
   changePassword,
 } = require('../controllers/authController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, allow } = require('../middleware/authMiddleware');
 
 /* ── Validation rules ─────────────────────────────────────────────── */
 const registerRules = [
@@ -69,5 +69,60 @@ router.post('/logout',                               logout);
 // Protected routes (JWT required)
 router.get('/me',               protect,             getMe);
 router.post('/change-password', protect, changePasswordRules, changePassword);
+
+// Team management (Settings page)
+router.get('/team',  protect, allow('ADMIN'), async (req, res) => {
+  const { PrismaClient } = require('@prisma/client');
+  const prisma = new PrismaClient();
+  try {
+    const users = await prisma.user.findMany({
+      where: { business_id: req.user.businessId },
+      select: { id:true, name:true, email:true, role:true, is_active:true, created_at:true },
+      orderBy: { created_at: 'asc' },
+    });
+    res.json({ users });
+  } catch(e) { res.status(500).json({ message: 'Failed to fetch team' }); }
+});
+
+router.post('/team', protect, allow('ADMIN'), async (req, res) => {
+  const { PrismaClient } = require('@prisma/client');
+  const bcrypt = require('bcryptjs');
+  const prisma = new PrismaClient();
+  const { name, email, password, role } = req.body;
+  if (!name || !email || !password) return res.status(400).json({ message: 'name, email, password required' });
+  try {
+    const hashed = await bcrypt.hash(password, 12);
+    const user = await prisma.user.create({
+      data: { name, email, password: hashed, role: role || 'STAFF', business_id: req.user.businessId },
+      select: { id:true, name:true, email:true, role:true },
+    });
+    res.status(201).json({ message: 'Team member added', user });
+  } catch(e) {
+    if (e.code === 'P2002') return res.status(409).json({ message: 'Email already registered' });
+    res.status(500).json({ message: 'Failed to add member' });
+  }
+});
+
+// Business profile update
+router.put('/business', protect, allow('ADMIN'), async (req, res) => {
+  const { PrismaClient } = require('@prisma/client');
+  const prisma = new PrismaClient();
+  const { name, gstin, phone, email, address, upi_id } = req.body;
+  try {
+    const business = await prisma.business.update({
+      where: { id: req.user.businessId },
+      data: { name, gstin, phone, email, address, upi_id: upi_id || null },
+    });
+    res.json({ message: 'Business updated', business });
+  } catch(e) {
+
+  console.error('[BUSINESS UPDATE ERROR]', e)
+
+  res.status(500).json({
+
+    message: 'Failed to update business',
+
+    error: e.message}); }
+});
 
 module.exports = router;

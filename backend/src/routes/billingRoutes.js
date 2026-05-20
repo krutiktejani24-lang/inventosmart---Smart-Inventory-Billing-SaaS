@@ -57,4 +57,10 @@ router.post('/:id/send-email',   protect, allow('ADMIN','MANAGER'), ctrl.sendEma
 // POST /api/invoices/:id/payment     — payment record karo
 router.post('/:id/payment',      protect, allow('ADMIN','MANAGER'), ctrl.recordPayment);
 
+// GET /api/invoices/:id/whatsapp — WhatsApp share link
+router.get('/:id/whatsapp', protect, ctrl.getWhatsAppLink);
+
+// GET /api/invoices/:id/upi-qr — UPI QR code
+router.get('/:id/upi-qr', protect, ctrl.getUPIQR);
+
 module.exports = router;

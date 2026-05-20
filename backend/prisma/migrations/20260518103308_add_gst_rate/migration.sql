@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Product" ADD COLUMN     "gst_rate" DOUBLE PRECISION NOT NULL DEFAULT 0;

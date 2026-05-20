@@ -41,6 +41,7 @@ model Business {
   address    String?
   phone      String?
   email      String?
+  upi_id     String?
   logo_url   String?
   plan       String   @default("free")
   created_at DateTime @default(now())
@@ -90,6 +91,7 @@ model Product {
   stock_qty     Int      @default(0)
   min_threshold Int      @default(5)
   unit          String   @default("Pcs")
+  gst_rate      Float    @default(0)
   image_url     String?
   is_active     Boolean  @default(true)
   category_id   String?
@@ -105,7 +107,6 @@ model Product {
   @@index([business_id])
   @@index([sku])
 }
-
 model Customer {
   id          String  @id @default(cuid())
   name        String
@@ -141,21 +142,25 @@ model Vendor {
 }
 
 model Invoice {
-  id          String        @id @default(cuid())
-  invoice_no  String        @unique
-  customer_id String
-  business_id String
-  subtotal    Float         @default(0)
-  discount    Float         @default(0)
-  cgst        Float         @default(0)
-  sgst        Float         @default(0)
-  igst        Float         @default(0)
-  total       Float         @default(0)
-  status      InvoiceStatus @default(DRAFT)
-  notes       String?
-  pdf_url     String?
-  due_date    DateTime?
-  created_at  DateTime      @default(now())
+  id                String        @id @default(cuid())
+  invoice_no        String        @unique
+  customer_id       String
+  business_id       String
+  subtotal          Float         @default(0)
+  discount          Float         @default(0)
+  cgst              Float         @default(0)
+  sgst              Float         @default(0)
+  igst              Float         @default(0)
+  total             Float         @default(0)
+  status            InvoiceStatus @default(DRAFT)
+
+  place_of_supply   String?
+  is_igst           Boolean @default(false)
+
+  notes             String?
+  pdf_url           String?
+  due_date          DateTime?
+  created_at        DateTime      @default(now())
 
   customer Customer @relation(fields: [customer_id], references: [id])
   business Business @relation(fields: [business_id], references: [id])

@@ -76,7 +76,10 @@ const createProduct = async (req, res) => {
     return res.status(201).json({ message: 'Product created', product });
   } catch (err) {
     console.error('[createProduct]', err);
-    return res.status(500).json({ message: 'Failed to create product' });
+    return res.status(500).json({
+      message: 'Failed to create product',
+      error: process.env.NODE_ENV !== 'production' ? err.message : undefined,
+    });
   }
 };
 

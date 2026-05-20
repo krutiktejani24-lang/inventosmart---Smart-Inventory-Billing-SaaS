@@ -182,7 +182,7 @@ const getInvoicePDF = async (id, businessId) => {
   });
   if (!invoice) return null;
 
-  const pdfBuffer = await generateInvoicePDF(invoice);
+  const pdfBuffer = await pdfGenerator.generateInvoicePDF(invoice);
   return { invoice, pdfBuffer };
 };
 
@@ -197,17 +197,15 @@ const sendInvoiceEmail = async (id, businessId) => {
   if (!invoice)              throw new Error('Invoice not found');
   if (!invoice.customer?.email) throw new Error('Customer email not found');
 
-  const pdfBuffer = await generateInvoicePDF(invoice);
+  const pdfBuffer = await pdfGenerator.generateInvoicePDF(invoice);
 
-  const transporter = nodemailer.createTransport({
-    host:   process.env.MAIL_HOST,
-    port:   Number(process.env.MAIL_PORT) || 587,
-    secure: false,
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS,
-    },
-  });
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
+  },
+});
 
   await transporter.sendMail({
     from:    process.env.MAIL_FROM,

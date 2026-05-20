@@ -18,9 +18,9 @@ app.use('/api/auth',      require('./src/routes/authRoutes'));
 app.use('/api/products',  require('./src/routes/inventoryRoutes'));
 app.use('/api/inventory', require('./src/routes/inventoryRoutes'));
 app.use('/api/invoices',  require('./src/routes/billingRoutes'));
-app.use('/api/customers', require('./src/routes/crmRoutes'));
-app.use('/api/vendors',   require('./src/routes/crmRoutes'));
 app.use('/api/reports',   require('./src/routes/reportRoutes'));
+// CRM — customers + vendors + purchase-orders ekj file ma badhaj che
+app.use('/api',           require('./src/routes/crmRoutes'));
 
 // ── Health Check ──────────────────────────────────────────────────────
 app.get('/health', (_, res) =>
@@ -41,7 +41,7 @@ app.use((err, req, res, next) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5001;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`✅ InventoSmart server running → http://localhost:${PORT}`)
 );

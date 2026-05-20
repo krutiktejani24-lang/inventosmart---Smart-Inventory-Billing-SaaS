@@ -1,30 +1,27 @@
 import { NavLink } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Package, FileText, Users, Truck,
   BarChart2, Settings, LogOut, Zap
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
-const navItems = [
-  { to: '/',          icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/inventory', icon: Package,         label: 'Inventory'  },
-  { to: '/billing',   icon: FileText,        label: 'Billing'    },
-  { to: '/customers', icon: Users,           label: 'Customers'  },
-  { to: '/vendors',   icon: Truck,           label: 'Vendors'    },
-  { to: '/reports',   icon: BarChart2,       label: 'Reports'    },
-  { to: '/settings',  icon: Settings,        label: 'Settings'   },
-];
-
-/**
- * Sidebar — navigation links + business name + logout
- * Props: onClose (mobile ma sidebar band karva)
- */
 export default function Sidebar({ onClose }) {
-  const { business, user, logout } = useAuthStore();
+  const { t }                       = useTranslation();
+  const { business, user, logout }  = useAuthStore();
+
+  const navItems = [
+    { to: '/',          icon: LayoutDashboard, label: t('nav.dashboard') },
+    { to: '/inventory', icon: Package,         label: t('nav.inventory')  },
+    { to: '/billing',   icon: FileText,        label: t('nav.billing')    },
+    { to: '/customers', icon: Users,           label: t('nav.customers')  },
+    { to: '/vendors',   icon: Truck,           label: t('nav.vendors')    },
+    { to: '/reports',   icon: BarChart2,       label: t('nav.reports')    },
+    { to: '/settings',  icon: Settings,        label: t('nav.settings')   },
+  ];
 
   return (
     <aside className="flex flex-col h-full bg-[#0f1117] text-white w-64 shrink-0">
-
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-6 py-5 border-b border-white/10">
         <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
@@ -40,7 +37,7 @@ export default function Sidebar({ onClose }) {
         </div>
       </div>
 
-      {/* Nav */}
+      {/* Nav links */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {navItems.map(({ to, icon: Icon, label }) => (
           <NavLink
@@ -49,7 +46,7 @@ export default function Sidebar({ onClose }) {
             end={to === '/'}
             onClick={onClose}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 ${
+              `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                 isActive
                   ? 'bg-indigo-500/20 text-indigo-300 font-medium'
                   : 'text-white/50 hover:text-white hover:bg-white/5'
@@ -74,15 +71,13 @@ export default function Sidebar({ onClose }) {
           </div>
           <div className="min-w-0">
             <p className="text-xs font-medium text-white truncate">{user?.name || 'User'}</p>
-            <p className="text-[11px] text-white/30 truncate capitalize">{user?.role?.toLowerCase() || 'admin'}</p>
+            <p className="text-[11px] text-white/30 capitalize">{user?.role?.toLowerCase() || 'admin'}</p>
           </div>
         </div>
-        <button
-          onClick={logout}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all duration-150"
-        >
+        <button onClick={logout}
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm text-white/40 hover:text-red-400 hover:bg-red-500/10 transition-all">
           <LogOut size={16} />
-          Logout
+          {t('nav.logout')}
         </button>
       </div>
     </aside>

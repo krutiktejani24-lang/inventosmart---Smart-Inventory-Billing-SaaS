@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer
@@ -99,6 +100,7 @@ const MOCK = {
 
 /* ─── Dashboard Page ───────────────────────────────────────────────── */
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [data, setData]     = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -132,7 +134,7 @@ export default function Dashboard() {
 
       {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-        <Navbar title="Dashboard" />
+        <Navbar title={t("dashboard.title")} />
 
         <main className="flex-1 overflow-y-auto px-4 lg:px-6 py-5 space-y-5">
 
@@ -144,31 +146,31 @@ export default function Dashboard() {
               <>
                 <StatCard
                   icon={IndianRupee}
-                  label="Today's Sales"
+                  label={t('dashboard.todaySales')}
                   value={`₹${fmt(stats.todaySales)}`}
-                  sub="Compared to yesterday"
+                  sub={t('dashboard.comparedYesterday')}
                   accent="bg-indigo-500"
                   trend={stats.salesTrend}
                 />
                 <StatCard
                   icon={Package}
-                  label="Total Products"
+                  label={t('dashboard.totalProducts')}
                   value={fmt(stats.totalProducts)}
-                  sub="Across all categories"
+                  sub={t('dashboard.acrossCategories')}
                   accent="bg-emerald-500"
                 />
                 <StatCard
                   icon={Clock}
-                  label="Pending Invoices"
+                  label={t('dashboard.pendingInvoices')}
                   value={stats.pendingInvoices}
-                  sub="Awaiting payment"
+                  sub={t('dashboard.awaitingPayment')}
                   accent="bg-amber-500"
                 />
                 <StatCard
                   icon={AlertTriangle}
-                  label="Low Stock Alerts"
+                  label={t('dashboard.lowStockAlerts')}
                   value={stats.lowStockCount}
-                  sub="Below minimum threshold"
+                  sub={t('dashboard.belowMinThreshold')}
                   accent="bg-red-500"
                 />
               </>

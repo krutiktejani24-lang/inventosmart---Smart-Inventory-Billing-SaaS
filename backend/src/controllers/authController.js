@@ -168,16 +168,20 @@ const getMe = async (req, res) => {
         role: true,
         is_active: true,
         created_at: true,
-        business: {
-          select: {
-            id: true,
-            name: true,
-            gstin: true,
-            phone: true,
+       business: {
+
+        select: {
+          id: true,
+           name: true,
+           gstin: true,
+           phone: true,
             address: true,
+           email: true,
+           upi_id: true,
             logo_url: true,
             plan: true,
           },
+
         },
       },
     });
@@ -219,4 +223,47 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout, getMe, changePassword };
+const updateBusiness = async (req, res) => {
+  try {
+    const {
+      name,
+      gstin,
+      phone,
+      email,
+      address,
+      upi_id
+    } = req.body;
+
+    const business = await prisma.business.update({
+      where: { id: req.user.businessId },
+      data: {
+        name,
+        gstin,
+        phone,
+        email,
+        address,
+        upi_id
+      }
+    });
+
+    return res.status(200).json({
+      message: 'Business updated successfully',
+      business
+    });
+
+  } catch (err) {
+    console.error('[updateBusiness]', err);
+    return res.status(500).json({
+      message: 'Failed to update business'
+    });
+  }
+};
+
+module.exports = {
+  register,
+  login,
+  logout,
+  getMe,
+  changePassword,
+  updateBusiness
+};

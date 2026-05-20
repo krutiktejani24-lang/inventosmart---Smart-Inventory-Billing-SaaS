@@ -125,6 +125,99 @@ const recordPayment = async (req, res) => {
   }
 };
 
+
+/* ─────────────────────────────────────────────────────────────────────
+   GET /api/invoices/:id/whatsapp
+   WhatsApp share link + message return karo
+───────────────────────────────────────────────────────────────────── */
+const getWhatsAppLink = async (req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const { buildWhatsAppMessage, buildWhatsAppURL } = require('../utils/whatsappHelper');
+    const prisma = new PrismaClient();
+
+    const invoice = await prisma.invoice.findFirst({
+      where:   { id: req.params.id, business_id: req.user.businessId },
+      include: { items: true, customer: true, business: true },
+    });
+
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    // PDF download link (direct backend URL)
+    const baseUrl   = process.env.BASE_URL || `http://localhost:${process.env.PORT || 5000}`;
+    const pdfLink   = `${baseUrl}/api/invoices/${invoice.id}/pdf`;
+    const invoiceWithPDF = { ...invoice, pdfLink };
+
+    const message   = buildWhatsAppMessage(invoiceWithPDF);
+    const waURL     = buildWhatsAppURL(invoice.customer?.phone, message);
+
+    return res.json({
+      whatsappURL: waURL,
+      message,
+      customerPhone: invoice.customer?.phone || null,
+      customerName:  invoice.customer?.name  || null,
+    });
+  } catch (err) {
+    console.error('[getWhatsAppLink]', err);
+    return res.status(500).json({ message: 'Failed to generate WhatsApp link' });
+  }
+};
+
+/* ─────────────────────────────────────────────────────────────────────
+   GET /api/invoices/:id/upi-qr
+   UPI QR code as base64 PNG return karo — frontend display mate
+───────────────────────────────────────────────────────────────────── */
+const getUPIQR = async (req, res) => {
+  try {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+
+    const invoice = await prisma.invoice.findFirst({
+      where:   { id: req.params.id, business_id: req.user.businessId },
+      include: { business: true },
+    });
+    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
+
+    const upiId = invoice.business?.upi_id;
+    if (!upiId)
+      return res.status(400).json({ message: 'UPI ID not configured. Set it in Settings → Business Profile.' });
+
+    let generateUPIQRBase64;
+    try {
+      generateUPIQRBase64 = require('../utils/upiQRHelper').generateUPIQRBase64;
+    } catch {
+      return res.status(500).json({ message: 'qrcode package not installed. Run: npm install qrcode' });
+    }
+
+    const qrDataUrl = await generateUPIQRBase64({
+      upiId,
+      payeeName: invoice.business.name,
+      amount:    invoice.total,
+      invoiceNo: invoice.invoice_no,
+    });
+
+    const { buildUPIString } = require('../utils/upiQRHelper');
+    const upiString = buildUPIString({
+      upiId,
+      payeeName: invoice.business.name,
+      amount:    invoice.total,
+      invoiceNo: invoice.invoice_no,
+    });
+
+    return res.json({
+      qrDataUrl,
+      upiId,
+      upiString,
+      amount:    invoice.total,
+      invoiceNo: invoice.invoice_no,
+      payeeName: invoice.business.name,
+    });
+  } catch (err) {
+    console.error('[getUPIQR]', err);
+    return res.status(500).json({ message: 'Failed to generate UPI QR' });
+  }
+
+};
 module.exports = {
   createInvoice,
   getInvoices,
@@ -133,4 +226,6 @@ module.exports = {
   downloadPDF,
   sendEmail,
   recordPayment,
+  getWhatsAppLink,
+  getUPIQR,
 };
