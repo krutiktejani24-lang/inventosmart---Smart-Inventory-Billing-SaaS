@@ -19,6 +19,7 @@ app.use('/api/products',  require('./src/routes/inventoryRoutes'));
 app.use('/api/inventory', require('./src/routes/inventoryRoutes'));
 app.use('/api/invoices',  require('./src/routes/billingRoutes'));
 app.use('/api/reports',   require('./src/routes/reportRoutes'));
+app.use('/api/portal',    require('./src/routes/portalRoutes'));
 // CRM — customers + vendors + purchase-orders ekj file ma badhaj che
 app.use('/api',           require('./src/routes/crmRoutes'));
 
