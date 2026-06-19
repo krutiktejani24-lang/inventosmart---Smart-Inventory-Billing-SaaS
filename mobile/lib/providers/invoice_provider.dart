@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/api_service.dart';
 
-final invoiceProvider = FutureProvider<List>((ref) async {
-  final res = await apiService.get('/invoices');
+final invoicesProvider =
+    FutureProvider.family<List, String>((ref, status) async {
+  final res = await api.getInvoices(status: status);
   return res.data['invoices'] ?? [];
-});
+}); 

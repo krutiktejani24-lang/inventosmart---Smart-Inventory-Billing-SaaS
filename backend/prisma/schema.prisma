@@ -7,7 +7,248 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ── Enums ─────────────────────────────────────────────────────────────
+model Business {
+  id              String          @id @default(cuid())
+  name            String
+  gstin           String?
+  address         String?
+  phone           String?
+  email           String?
+  logo_url        String?
+  plan            String          @default("free")
+  created_at      DateTime        @default(now())
+  upi_id          String?
+  categories      Category[]
+  customers       Customer[]
+  invoices        Invoice[]
+  products        Product[]
+  purchase_orders PurchaseOrder[]
+  stock_movements StockMovement[]
+  subscription    Subscription?
+  users           User[]
+  vendors         Vendor[]
+  notifications   Notification[]
+  audit_logs      AuditLog[]
+  payments Payment[]
+}
+
+model User {
+  id          String     @id @default(cuid())
+  name        String
+  email       String     @unique
+  password    String
+  role        Role       @default(STAFF)
+  is_active   Boolean    @default(true)
+  business_id String
+  audit_logs  AuditLog[]
+  created_at  DateTime   @default(now())
+  business    Business   @relation(fields: [business_id], references: [id])
+
+  @@index([business_id])
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  business_id String
+  business    Business  @relation(fields: [business_id], references: [id])
+  products    Product[]
+}
+
+model Product {
+  id              String          @id @default(cuid())
+  name            String
+  sku             String?
+  hsn_code        String?
+  description     String?
+  price           Float           @default(0)
+  cost_price      Float           @default(0)
+  stock_qty       Int             @default(0)
+  min_threshold   Int             @default(5)
+  unit            String          @default("Pcs")
+  image_url       String?
+  is_active       Boolean         @default(true)
+  category_id     String?
+  business_id     String
+  created_at      DateTime        @default(now())
+  gst_rate        Float           @default(0)
+  invoice_items   InvoiceItem[]
+  po_items        POItem[]
+  business        Business        @relation(fields: [business_id], references: [id])
+  category        Category?       @relation(fields: [category_id], references: [id])
+  stock_movements StockMovement[]
+
+  @@index([business_id])
+  @@index([sku])
+}
+
+model Customer {
+  id          String    @id @default(cuid())
+  name        String
+  phone       String?
+  email       String?
+  gstin       String?
+  address     String?
+  city        String?
+  state       String?
+  balance     Float     @default(0)
+  business_id String
+  business    Business  @relation(fields: [business_id], references: [id])
+  invoices    Invoice[]
+
+  @@index([business_id])
+}
+
+model Vendor {
+  id              String          @id @default(cuid())
+  name            String
+  phone           String?
+  email           String?
+  gstin           String?
+  address         String?
+  balance         Float           @default(0)
+  business_id     String
+  purchase_orders PurchaseOrder[]
+  business        Business        @relation(fields: [business_id], references: [id])
+
+  @@index([business_id])
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  invoice_no      String        @unique
+  customer_id     String
+  business_id     String
+  subtotal        Float         @default(0)
+  discount        Float         @default(0)
+  cgst            Float         @default(0)
+  sgst            Float         @default(0)
+  igst            Float         @default(0)
+  total           Float         @default(0)
+  status          InvoiceStatus @default(DRAFT)
+  notes           String?
+  pdf_url         String?
+  due_date        DateTime?
+  created_at      DateTime      @default(now())
+  is_igst         Boolean       @default(false)
+  place_of_supply String?
+  business        Business      @relation(fields: [business_id], references: [id])
+  customer        Customer      @relation(fields: [customer_id], references: [id])
+  items           InvoiceItem[]
+  payments        Payment[]
+
+  @@index([business_id])
+  @@index([status])
+}
+
+model InvoiceItem {
+  id         String   @id @default(cuid())
+  invoice_id String
+  product_id String?
+  name       String
+  hsn_code   String?
+  qty        Int
+  price      Float
+  discount   Float    @default(0)
+  gst_rate   Float    @default(0)
+  cgst       Float    @default(0)
+  sgst       Float    @default(0)
+  igst       Float    @default(0)
+  total      Float
+  invoice    Invoice  @relation(fields: [invoice_id], references: [id])
+  product    Product? @relation(fields: [product_id], references: [id])
+}
+
+model StockMovement {
+  id           String            @id @default(cuid())
+  product_id   String
+  business_id  String
+  type         StockMovementType
+  qty          Int
+  before_qty   Int
+  after_qty    Int
+  reason       String?
+  reference_id String?
+  created_by   String?
+  created_at   DateTime          @default(now())
+  business     Business          @relation(fields: [business_id], references: [id])
+  product      Product           @relation(fields: [product_id], references: [id])
+
+  @@index([product_id])
+}
+
+model PurchaseOrder {
+  id          String   @id @default(cuid())
+  po_number   String   @unique
+  vendor_id   String
+  business_id String
+  total       Float    @default(0)
+  status      POStatus @default(PENDING)
+  notes       String?
+  created_at  DateTime @default(now())
+  items       POItem[]
+  business    Business @relation(fields: [business_id], references: [id])
+  vendor      Vendor   @relation(fields: [vendor_id], references: [id])
+
+  @@index([business_id])
+}
+
+model POItem {
+  id           String        @id @default(cuid())
+  po_id        String
+  product_id   String
+  qty          Int
+  price        Float
+  received_qty Int           @default(0)
+  po           PurchaseOrder @relation(fields: [po_id], references: [id])
+  product      Product       @relation(fields: [product_id], references: [id])
+}
+
+model Payment {
+  id           String   @id @default(cuid())
+  invoice_id   String
+  business_id  String
+  amount       Float
+  method       String
+  reference    String?
+  notes        String?
+  created_at   DateTime @default(now())
+  invoice      Invoice  @relation(fields: [invoice_id], references: [id])
+  business     Business @relation(fields: [business_id], references: [id])
+  @@index([invoice_id])
+  @@index([business_id])
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  price         Float
+  billing_cycle String
+  max_users     Int
+  max_products  Int
+  max_invoices  Int
+  features      Json?
+  created_at    DateTime       @default(now())
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                       String    @id @default(cuid())
+  business_id              String    @unique
+  plan_id                  String
+  razorpay_subscription_id String?
+  razorpay_customer_id     String?
+  status                   String    @default("ACTIVE")
+  start_date               DateTime  @default(now())
+  end_date                 DateTime?
+  created_at               DateTime  @default(now())
+  business                 Business  @relation(fields: [business_id], references: [id])
+  plan                     Plan      @relation(fields: [plan_id], references: [id])
+
+  @@index([business_id])
+  @@index([plan_id])
+}
+
 enum Role {
   ADMIN
   MANAGER
@@ -17,6 +258,7 @@ enum Role {
 enum InvoiceStatus {
   DRAFT
   SENT
+  PARTIAL
   PAID
   CANCELLED
 }
@@ -33,222 +275,35 @@ enum POStatus {
   CANCELLED
 }
 
-// ── Models ────────────────────────────────────────────────────────────
-model Business {
-  id         String   @id @default(cuid())
-  name       String
-  gstin      String?
-  address    String?
-  phone      String?
-  email      String?
-  upi_id     String?
-  logo_url   String?
-  plan       String   @default("free")
-  created_at DateTime @default(now())
-
-  users           User[]
-  categories      Category[]
-  products        Product[]
-  customers       Customer[]
-  vendors         Vendor[]
-  invoices        Invoice[]
-  stock_movements StockMovement[]
-  purchase_orders PurchaseOrder[]
-}
-
-model User {
-  id          String   @id @default(cuid())
-  name        String
-  email       String   @unique
-  password    String
-  role        Role     @default(STAFF)
-  is_active   Boolean  @default(true)
-  business_id String
-  created_at  DateTime @default(now())
-
-  business Business @relation(fields: [business_id], references: [id])
-
-  @@index([business_id])
-}
-
-model Category {
+model Notification {
   id          String @id @default(cuid())
-  name        String
   business_id String
 
-  business Business  @relation(fields: [business_id], references: [id])
-  products Product[]
-}
+  title   String
+  message String
 
-model Product {
-  id            String   @id @default(cuid())
-  name          String
-  sku           String?
-  hsn_code      String?
-  description   String?
-  price         Float    @default(0)
-  cost_price    Float    @default(0)
-  stock_qty     Int      @default(0)
-  min_threshold Int      @default(5)
-  unit          String   @default("Pcs")
-  gst_rate      Float    @default(0)
-  image_url     String?
-  is_active     Boolean  @default(true)
-  category_id   String?
-  business_id   String
-  created_at    DateTime @default(now())
+  is_read Boolean @default(false)
 
-  category        Category?       @relation(fields: [category_id], references: [id])
-  business        Business        @relation(fields: [business_id], references: [id])
-  invoice_items   InvoiceItem[]
-  stock_movements StockMovement[]
-  po_items        POItem[]
-
-  @@index([business_id])
-  @@index([sku])
-}
-model Customer {
-  id          String  @id @default(cuid())
-  name        String
-  phone       String?
-  email       String?
-  gstin       String?
-  address     String?
-  city        String?
-  state       String?
-  balance     Float   @default(0)
-  business_id String
-
-  business Business  @relation(fields: [business_id], references: [id])
-  invoices Invoice[]
-
-  @@index([business_id])
-}
-
-model Vendor {
-  id          String  @id @default(cuid())
-  name        String
-  phone       String?
-  email       String?
-  gstin       String?
-  address     String?
-  balance     Float   @default(0)
-  business_id String
-
-  business        Business        @relation(fields: [business_id], references: [id])
-  purchase_orders PurchaseOrder[]
-
-  @@index([business_id])
-}
-
-model Invoice {
-  id                String        @id @default(cuid())
-  invoice_no        String        @unique
-  customer_id       String
-  business_id       String
-  subtotal          Float         @default(0)
-  discount          Float         @default(0)
-  cgst              Float         @default(0)
-  sgst              Float         @default(0)
-  igst              Float         @default(0)
-  total             Float         @default(0)
-  status            InvoiceStatus @default(DRAFT)
-
-  place_of_supply   String?
-  is_igst           Boolean @default(false)
-
-  notes             String?
-  pdf_url           String?
-  due_date          DateTime?
-  created_at        DateTime      @default(now())
-
-  customer Customer @relation(fields: [customer_id], references: [id])
-  business Business @relation(fields: [business_id], references: [id])
-
-  items    InvoiceItem[]
-  payments Payment[]
-
-  @@index([business_id])
-  @@index([status])
-}
-
-model InvoiceItem {
-  id         String  @id @default(cuid())
-  invoice_id String
-  product_id String?
-  name       String
-  hsn_code   String?
-  qty        Int
-  price      Float
-  discount   Float   @default(0)
-  gst_rate   Float   @default(0)
-  cgst       Float   @default(0)
-  sgst       Float   @default(0)
-  igst       Float   @default(0)
-  total      Float
-
-  invoice Invoice  @relation(fields: [invoice_id], references: [id])
-  product Product? @relation(fields: [product_id], references: [id])
-}
-
-model StockMovement {
-  id           String            @id @default(cuid())
-  product_id   String
-  business_id  String
-  type         StockMovementType
-  qty          Int
-  before_qty   Int
-  after_qty    Int
-  reason       String?
-  reference_id String?
-  created_by   String?
-  created_at   DateTime          @default(now())
-
-  product  Product  @relation(fields: [product_id], references: [id])
-  business Business @relation(fields: [business_id], references: [id])
-
-  @@index([product_id])
-}
-
-model PurchaseOrder {
-  id          String   @id @default(cuid())
-  po_number   String   @unique
-  vendor_id   String
-  business_id String
-  total       Float    @default(0)
-  status      POStatus @default(PENDING)
-  notes       String?
-  created_at  DateTime @default(now())
-
-  vendor   Vendor   @relation(fields: [vendor_id], references: [id])
-  business Business @relation(fields: [business_id], references: [id])
-  items    POItem[]
-
-  @@index([business_id])
-}
-
-model POItem {
-  id           String @id @default(cuid())
-  po_id        String
-  product_id   String
-  qty          Int
-  price        Float
-  received_qty Int    @default(0)
-
-  po      PurchaseOrder @relation(fields: [po_id], references: [id])
-  product Product       @relation(fields: [product_id], references: [id])
-}
-
-model Payment {
-  id         String   @id @default(cuid())
-  invoice_id String
-  amount     Float
-  method     String   @default("CASH")
-  reference  String?
-  notes      String?
   created_at DateTime @default(now())
 
-  invoice Invoice @relation(fields: [invoice_id], references: [id])
+  business Business @relation(fields: [business_id], references: [id])
 
-  @@index([invoice_id])
+  @@index([business_id])
+}
+
+model AuditLog {
+  id          String @id @default(cuid())
+  business_id String
+  user_id     String
+
+  action String
+  module String
+
+  created_at DateTime @default(now())
+
+  business Business @relation(fields: [business_id], references: [id])
+  user     User     @relation(fields: [user_id], references: [id])
+
+  @@index([business_id])
+  @@index([user_id])
 }

@@ -9,9 +9,23 @@ const prisma = new PrismaClient();
    AUTO INVOICE NUMBER — INV-2025-0001
 ───────────────────────────────────────────────────────────────────── */
 const generateInvoiceNo = async (businessId) => {
-  const year  = new Date().getFullYear();
-  const count = await prisma.invoice.count({ where: { business_id: businessId } });
-  return `INV-${year}-${String(count + 1).padStart(4, '0')}`;
+  const year = new Date().getFullYear();
+
+  const lastInvoice = await prisma.invoice.findFirst({
+    where: { business_id: businessId },
+    orderBy: {
+      created_at: 'desc'
+    }
+  });
+
+  let nextNumber = 1;
+
+  if (lastInvoice?.invoice_no) {
+    const parts = lastInvoice.invoice_no.split('-');
+    nextNumber = parseInt(parts[2] || '0') + 1;
+  }
+
+  return `INV-${year}-${String(nextNumber).padStart(4, '0')}`;
 };
 
 /* ─────────────────────────────────────────────────────────────────────

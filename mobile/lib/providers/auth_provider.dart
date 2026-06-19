@@ -50,7 +50,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     if (token != null && token.isNotEmpty) {
       state = state.copyWith(token: token, isLoading: true);
       try {
-        final res  = await apiService.getMe();
+        final res  = await api.getMe();
         final data = res.data as Map<String, dynamic>;
         state = state.copyWith(
           token:     token,
@@ -71,7 +71,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<bool> login(String email, String password) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final res  = await apiService.login(email.trim(), password);
+      final res  = await api.login(email.trim(), password);
       final data = res.data as Map<String, dynamic>;
 
       final token    = data['token']    as String;
@@ -105,6 +105,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
       return false;
     }
   }
+
+  final api = ApiService();  
 
   /// Logout — clear everything
   Future<void> logout() async {

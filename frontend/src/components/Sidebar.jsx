@@ -1,8 +1,18 @@
 import { NavLink } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Wallet } from "lucide-react";
 import {
-  LayoutDashboard, Package, FileText, Users, Truck,
-  BarChart2, Settings, LogOut, Zap
+  LayoutDashboard,
+  Package,
+  FileText,
+  Users,
+  Truck,
+  BarChart2,
+  Settings,
+  LogOut,
+  Zap,
+  Crown,
+  CreditCard
 } from 'lucide-react';
 import useAuthStore from '../store/authStore';
 
@@ -16,12 +26,15 @@ export default function Sidebar({ onClose }) {
     { to: '/billing',   icon: FileText,        label: t('nav.billing')    },
     { to: '/customers', icon: Users,           label: t('nav.customers')  },
     { to: '/vendors',   icon: Truck,           label: t('nav.vendors')    },
+    { to: '/payments', icon: Wallet, label: 'Payments' },
     { to: '/reports',   icon: BarChart2,       label: t('nav.reports')    },
-    { to: '/settings',  icon: Settings,        label: t('nav.settings')   },
+    { to: '/pricing',      icon: Crown,           label: t('Pricing') },
+    { to: '/subscriptions', icon: CreditCard,      label: t('Subscription') },
+    { to: '/settings',     icon: Settings,        label: t('nav.settings') },
   ];
 
   return (
-    <aside className="flex flex-col h-full bg-[#0f1117] text-white w-64 shrink-0">
+    <aside className="flex flex-col min-h-screen bg-[#0f1117] text-white w-64 shrink-0">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-6 py-5 border-b border-white/10">
         <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">

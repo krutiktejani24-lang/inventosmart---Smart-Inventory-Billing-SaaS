@@ -101,7 +101,7 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
   Future<void> loadProducts({String search = ''}) async {
     state = state.copyWith(isLoading: true, clearError: true, search: search);
     try {
-      final res   = await apiService.getProducts(page: 1, search: search);
+      final res   = await api.getProducts(page: 1, search: search);
       final data  = res.data as Map<String, dynamic>;
       final list  = (data['products'] as List)
           .map((e) => Product.fromJson(e as Map<String, dynamic>))
@@ -125,7 +125,7 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
     state = state.copyWith(isLoadingMore: true);
     try {
       final nextPage = state.page + 1;
-      final res      = await apiService.getProducts(page: nextPage, search: state.search);
+      final res      = await api.getProducts(page: nextPage, search: state.search);
       final data     = res.data as Map<String, dynamic>;
       final list     = (data['products'] as List)
           .map((e) => Product.fromJson(e as Map<String, dynamic>))
@@ -153,13 +153,13 @@ final inventoryProvider = StateNotifierProvider<InventoryNotifier, InventoryStat
 
 /// Dashboard stats provider
 final dashboardProvider = FutureProvider<Map<String, dynamic>>((ref) async {
-  final res = await apiService.getDashboard();
+  final res = await api.getDashboard();
   return res.data as Map<String, dynamic>;
 });
 
 /// Invoices provider
 final invoicesProvider = FutureProvider.family<List, String>((ref, status) async {
-  final res  = await apiService.getInvoices(status: status);
+  final res  = await api.getInvoices(status: status);
   final data = res.data as Map<String, dynamic>;
   return data['invoices'] as List? ?? [];
 });

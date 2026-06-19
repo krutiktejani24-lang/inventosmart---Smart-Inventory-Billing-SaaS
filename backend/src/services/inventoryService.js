@@ -1,7 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
-
+const { createNotification } = require('./notificationService');
 /* ─────────────────────────────────────────────────────────────────────
    PRODUCT SERVICES
 ───────────────────────────────────────────────────────────────────── */
@@ -98,28 +97,70 @@ const getProductById = async (id, businessId) => {
  * Create new product — auto-generate SKU if not provided
  */
 const createProduct = async (businessId, data) => {
+
+  const subscription = await prisma.subscription.findFirst({
+  where: {
+    business_id: businessId,
+    status: 'ACTIVE'
+  },
+  include: {
+    plan: true
+  }
+});
+
+const productCount = await prisma.product.count({
+  where: {
+    business_id: businessId,
+    is_active: true
+  }
+});
+
+if (
+  subscription?.plan?.max_products !== -1 &&
+  productCount >= subscription.plan.max_products
+) {
+  throw new Error(
+    `Product limit reached. Upgrade your plan.`
+  );
+}
+
   const sku = data.sku || await generateSKU(businessId, data.name);
 
-  return prisma.product.create({
-    data: {
-      name:          data.name,
-      sku,
-      hsn_code:      data.hsn_code      || null,
-      description:   data.description   || null,
-      price:         Number(data.price)         || 0,
-      cost_price:    Number(data.cost_price)    || 0,
-      stock_qty:     parseInt(data.stock_qty)   || 0,
-      min_threshold: parseInt(data.min_threshold) || 5,
-      unit:          data.unit          || 'Pcs',
-      gst_rate:      Number(data.gst_rate)      || 18,
-      image_url:     data.image_url     || null,
-      category_id:   data.category_id   || null,
-      is_active:     true,
-      business_id:   businessId,
+  const product = await prisma.product.create({
+  data: {
+    name: data.name,
+    sku,
+    hsn_code: data.hsn_code || null,
+    description: data.description || null,
+    price: Number(data.price) || 0,
+    cost_price: Number(data.cost_price) || 0,
+    stock_qty: parseInt(data.stock_qty) || 0,
+    min_threshold: parseInt(data.min_threshold) || 5,
+    unit: data.unit || 'Pcs',
+    gst_rate: Number(data.gst_rate) || 18,
+    image_url: data.image_url || null,
+    category_id: data.category_id || null,
+    is_active: true,
+    business_id: businessId,
+  },
+  include: {
+    category: {
+      select: {
+        id: true,
+        name: true,
+      },
     },
-    include: { category: { select: { id: true, name: true } } },
-  });
-};
+  },
+});
+
+if (product.stock_qty <= product.min_threshold) {
+  await createNotification(
+    businessId,
+    'Low Stock Alert',
+    `${product.name} stock is below threshold`
+  );
+}
+}
 
 /**
  * Update product
@@ -232,6 +273,13 @@ const stockOut = async (businessId, productId, qty, reason, referenceId, created
       where: { id: productId },
       data:  { stock_qty: afterQty },
     });
+    if (updated.stock_qty <= updated.min_threshold) {
+  await createNotification(
+    businessId,
+    'Low Stock Alert',
+    `${updated.name} stock is below threshold (${updated.stock_qty} remaining)`
+  );
+}s
 
     const movement = await tx.stockMovement.create({
       data: {
@@ -373,6 +421,10 @@ const generateSKU = async (businessId, name) => {
   const count = await prisma.product.count({ where: { business_id: businessId } });
   const prefix = (name || 'PRD').replace(/\s+/g, '').toUpperCase().slice(0, 3);
   return `${prefix}-${String(count + 1).padStart(5, '0')}`;
+};
+
+module.exports = {
+  createNotification,
 };
 
 module.exports = {

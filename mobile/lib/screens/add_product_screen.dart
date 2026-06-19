@@ -78,9 +78,9 @@ class _AddProductScreenState extends ConsumerState<AddProductScreen> {
       };
 
       if (widget.editProduct != null) {
-        await apiService.updateProduct(widget.editProduct!.id, data);
+        await api.updateProduct(widget.editProduct!.id, data);
       } else {
-        await apiService.createProduct(data);
+        await api.createProduct(data);
       }
 
       if (mounted) Navigator.pop(context, true);

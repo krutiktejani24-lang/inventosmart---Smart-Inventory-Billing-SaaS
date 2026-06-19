@@ -3,6 +3,14 @@ const express = require('express');
 const cors    = require('cors');
 
 const app = express();
+const subscriptionRoutes = require('./src/routes/subscriptionRoutes');
+
+const notificationRoutes =
+require('./src/routes/notificationRoutes');
+
+const auditLogRoutes =
+require('./src/routes/auditLogRoutes');
+const paymentRoutes = require("./src/routes/paymentRoutes");  
 
 // ── Core Middleware ───────────────────────────────────────────────────
 app.use(cors({
@@ -19,7 +27,19 @@ app.use('/api/products',  require('./src/routes/inventoryRoutes'));
 app.use('/api/inventory', require('./src/routes/inventoryRoutes'));
 app.use('/api/invoices',  require('./src/routes/billingRoutes'));
 app.use('/api/reports',   require('./src/routes/reportRoutes'));
-app.use('/api/portal',    require('./src/routes/portalRoutes'));
+app.use('/api/portal',    require('./src/routes/portalRoutes'));   
+app.use('/api/subscriptions', subscriptionRoutes);
+app.use(
+  '/api/notifications',
+  notificationRoutes
+);
+
+app.use(
+  '/api/auditlogs',
+  auditLogRoutes
+); 
+app.use("/api/payments", paymentRoutes);
+
 // CRM — customers + vendors + purchase-orders ekj file ma badhaj che
 app.use('/api',           require('./src/routes/crmRoutes'));
 
@@ -46,3 +66,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () =>
   console.log(`✅ InventoSmart server running → http://localhost:${PORT}`)
 );
+

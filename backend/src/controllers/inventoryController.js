@@ -1,6 +1,8 @@
 const { validationResult } = require('express-validator');
 const csv = require('csv-parse/sync');
 const service = require('../services/inventoryService');
+const { createAuditLog } = require('../services/auditLogService');
+const { createNotification } = require('../services/notificationService');
 
 /* ─────────────────────────────────────────────────────────────────────
    HELPER — validation error response
@@ -73,6 +75,13 @@ const createProduct = async (req, res) => {
       category_id:   category_id || null,
     });
 
+     await createAuditLog(
+        req.user.businessId,
+        req.user.userId,
+        'Created Product',
+        'Inventory'
+      );
+
     return res.status(201).json({ message: 'Product created', product });
   } catch (err) {
     console.error('[createProduct]', err);
@@ -95,6 +104,14 @@ const updateProduct = async (req, res) => {
       req.body
     );
     if (!product) return res.status(404).json({ message: 'Product not found' });
+
+      await createAuditLog(
+       req.user.businessId,
+       req.user.userId,
+        'Updated Product',
+        'Inventory'
+      );
+
     return res.json({ message: 'Product updated', product });
   } catch (err) {
     console.error('[updateProduct]', err);
@@ -109,6 +126,14 @@ const deleteProduct = async (req, res) => {
   try {
     const product = await service.deleteProduct(req.params.id, req.user.businessId);
     if (!product) return res.status(404).json({ message: 'Product not found' });
+      
+      await createAuditLog(
+        req.user.businessId,
+        req.user.userId,
+        'Deleted Product',
+        'Inventory'
+      );
+
     return res.json({ message: 'Product deleted successfully' });
   } catch (err) {
     console.error('[deleteProduct]', err);
@@ -162,6 +187,12 @@ const importCSV = async (req, res) => {
       return res.status(400).json({ message: 'CSV is empty or has no data rows' });
 
     const result = await service.bulkImportProducts(req.user.businessId, rows);
+    await createAuditLog(
+  req.user.businessId,
+  req.user.userId,
+  `Imported ${result.created} products`,
+  'Inventory'
+);
 
     return res.status(201).json({
       message: `Import complete — ${result.created} created, ${result.skipped} skipped`,
@@ -197,6 +228,13 @@ const stockIn = async (req, res) => {
       req.user.userId
     );
 
+    await createAuditLog(
+  req.user.businessId,
+  req.user.userId,
+  `Added ${qty} stock`,
+  'Inventory'
+);
+
     return res.status(200).json({
       message: `Stock added. New qty: ${result.product.stock_qty}`,
       ...result,
@@ -225,6 +263,13 @@ const stockOut = async (req, res) => {
       referenceId,
       req.user.userId
     );
+
+    await createAuditLog(
+  req.user.businessId,
+  req.user.userId,
+  `Removed ${qty} stock`,
+  'Inventory'
+);
 
     return res.status(200).json({
       message: `Stock deducted. New qty: ${result.product.stock_qty}`,
@@ -277,6 +322,12 @@ const createCategory = async (req, res) => {
       return res.status(400).json({ message: 'Category name is required' });
 
     const category = await service.createCategory(req.user.businessId, name.trim());
+    await createAuditLog(
+  req.user.businessId,
+  req.user.userId,
+  'Created Category',
+  'Inventory'
+);
     return res.status(201).json({ message: 'Category created', category });
   } catch (err) {
     console.error('[createCategory]', err);

@@ -1,237 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
-import '../providers/auth_provider.dart';
-import '../providers/inventory_provider.dart';
-import 'inventory_screen.dart';
-import 'invoice_screen.dart';
-import 'scanner_screen.dart';
-import 'login_screen.dart';
+import 'package:fl_chart/fl_chart.dart';
+import '../providers/app_providers.dart';
+import '../utils/app_theme.dart';
+import '../utils/helpers.dart';
+import '../widgets/common_widgets.dart';
 
-class HomeScreen extends ConsumerStatefulWidget {
+class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
-
-  @override
-  ConsumerState<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
-    _DashboardTab(),
-    InventoryScreen(),
-    InvoiceScreen(),
-    ScannerScreen(),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(index: _currentIndex, children: _screens),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined),
-            activeIcon: Icon(Icons.dashboard_rounded),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2_outlined),
-            activeIcon: Icon(Icons.inventory_2_rounded),
-            label: 'Inventory',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.receipt_long_outlined),
-            activeIcon: Icon(Icons.receipt_long_rounded),
-            label: 'Invoices',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner_outlined),
-            activeIcon: Icon(Icons.qr_code_scanner),
-            label: 'Scanner',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Dashboard Tab ─────────────────────────────────────────────────
-class _DashboardTab extends ConsumerWidget {
-  const _DashboardTab();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth      = ref.watch(authProvider);
     final dashboard = ref.watch(dashboardProvider);
-    final fmtINR    = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              auth.business?['name'] ?? 'InventoSmart',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            Text(
-              'Good ${_greeting()}, ${(auth.user?['name'] ?? 'Admin').split(' ').first}',
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.normal),
-            ),
-          ],
-        ),
+        title: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(auth.business?['name'] ?? 'InventoSmart',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          Text('Good ${greeting()}, ${(auth.user?['name'] ?? 'Admin').split(' ').first}',
+            style: const TextStyle(fontSize: 12, color: AppTheme.slate400, fontWeight: FontWeight.normal)),
+        ]),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout_rounded),
-            onPressed: () async {
-              await ref.read(authProvider.notifier).logout();
-              if (context.mounted) {
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(builder: (_) => const LoginScreen()),
-                );
-              }
-            },
+            onPressed: () => ref.read(authProvider.notifier).logout(),
           ),
         ],
       ),
       body: RefreshIndicator(
-        color: const Color(0xFF6366F1),
+        color: AppTheme.primary,
         onRefresh: () => ref.refresh(dashboardProvider.future),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.all(16),
           child: dashboard.when(
-            loading: () => const _DashboardSkeleton(),
-            error:   (e, _) => _ErrorWidget(message: e.toString(), onRetry: () => ref.refresh(dashboardProvider.future)),
+            loading: () => const _Skeleton(),
+            error: (e, _) => ErrorState(msg: errorMessage(e), onRetry: () => ref.refresh(dashboardProvider.future)),
             data: (data) {
-              final stats   = (data['stats'] as Map?)   ?? {};
-              final weekly  = (data['weeklyData'] as List?) ?? [];
-              final recent  = (data['recentInvoices'] as List?) ?? [];
+              final stats  = (data['stats']  as Map?) ?? {};
+              final weekly = (data['weeklyData'] as List?) ?? [];
+              final recent = (data['recentInvoices'] as List?) ?? [];
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ── Stat Cards ──
-                  GridView.count(
-                    crossAxisCount:   2,
-                    shrinkWrap:       true,
-                    physics:          const NeverScrollableScrollPhysics(),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing:  12,
-                    childAspectRatio: 1.6,
-                    children: [
-                      _StatCard(
-                        icon:  Icons.currency_rupee_rounded,
-                        label: "Today's Sales",
-                        value: fmtINR.format(stats['todaySales'] ?? 0),
-                        color: const Color(0xFF6366F1),
-                        bg:    const Color(0xFFEEF2FF),
-                      ),
-                      _StatCard(
-                        icon:  Icons.inventory_2_rounded,
-                        label: 'Products',
-                        value: '${stats['totalProducts'] ?? 0}',
-                        color: const Color(0xFF10B981),
-                        bg:    const Color(0xFFECFDF5),
-                      ),
-                      _StatCard(
-                        icon:  Icons.receipt_long_rounded,
-                        label: 'Pending',
-                        value: '${stats['pendingInvoices'] ?? 0}',
-                        color: const Color(0xFFF59E0B),
-                        bg:    const Color(0xFFFEF3C7),
-                      ),
-                      _StatCard(
-                        icon:  Icons.warning_amber_rounded,
-                        label: 'Low Stock',
-                        value: '${stats['lowStockCount'] ?? 0}',
-                        color: const Color(0xFFEF4444),
-                        bg:    const Color(0xFFFEF2F2),
-                      ),
-                    ],
+              return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Stats grid
+                GridView.count(
+                  crossAxisCount: 2, shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  crossAxisSpacing: 12, mainAxisSpacing: 12,
+                  childAspectRatio: 1.2,
+                  children: [
+                    StatCard(icon: Icons.currency_rupee_rounded, label: "Today's Sales",
+                      value: formatINR(stats['todaySales'] ?? 0), color: AppTheme.primary, bg: AppTheme.indigo50,
+                      sub: 'vs yesterday'),
+                    StatCard(icon: Icons.inventory_2_rounded, label: 'Total Products',
+                      value: '${stats['totalProducts'] ?? 0}', color: AppTheme.emerald, bg: const Color(0xFFECFDF5)),
+                    StatCard(icon: Icons.receipt_long_rounded, label: 'Pending Invoices',
+                      value: '${stats['pendingInvoices'] ?? 0}', color: AppTheme.amber, bg: const Color(0xFFFEF3C7)),
+                    StatCard(icon: Icons.warning_amber_rounded, label: 'Low Stock',
+                      value: '${stats['lowStockCount'] ?? 0}', color: AppTheme.red, bg: const Color(0xFFFEF2F2)),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Weekly Sales Chart
+                if (weekly.isNotEmpty) ...[
+                  SectionHeader(title: 'Weekly Sales', icon: Icons.bar_chart_rounded),
+                  const SizedBox(height: 12),
+                  AppCard(
+                    padding: const EdgeInsets.fromLTRB(12, 16, 16, 8),
+                    child: SizedBox(
+                      height: 160,
+                      child: _WeeklyChart(weekly: weekly.cast<Map>()),
+                    ),
                   ),
                   const SizedBox(height: 24),
-
-                  // ── Weekly Sales Chart ──
-                  if (weekly.isNotEmpty) ...[
-                    _SectionHeader(title: 'Weekly Sales', icon: Icons.bar_chart_rounded),
-                    const SizedBox(height: 12),
-                    _WeeklyChart(weekly: weekly.cast<Map>()),
-                    const SizedBox(height: 24),
-                  ],
-
-                  // ── Recent Invoices ──
-                  if (recent.isNotEmpty) ...[
-                    _SectionHeader(title: 'Recent Invoices', icon: Icons.receipt_outlined),
-                    const SizedBox(height: 12),
-                    ...recent.take(5).map(
-                      (inv) => _InvoiceTile(invoice: inv as Map, fmtINR: fmtINR),
-                    ),
-                  ],
                 ],
-              );
+
+                // Low Stock alerts
+                if ((stats['lowStockCount'] ?? 0) > 0) ...[
+                  SectionHeader(title: 'Low Stock Alerts', icon: Icons.warning_amber_rounded),
+                  const SizedBox(height: 12),
+                  _LowStockWidget(ref: ref),
+                  const SizedBox(height: 24),
+                ],
+
+                // Recent Invoices
+                if (recent.isNotEmpty) ...[
+                  SectionHeader(title: 'Recent Invoices', icon: Icons.receipt_outlined),
+                  const SizedBox(height: 12),
+                  ...recent.take(5).map((inv) => _InvoiceRow(inv: inv as Map)),
+                ],
+              ]);
             },
           ),
         ),
       ),
     );
   }
-
-  String _greeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'morning';
-    if (h < 17) return 'afternoon';
-    return 'evening';
-  }
 }
 
-// ── Stat Card ──────────────────────────────────────────────────────
-class _StatCard extends StatelessWidget {
-  final IconData icon;
-  final String   label, value;
-  final Color    color, bg;
-
-  const _StatCard({
-    required this.icon, required this.label,
-    required this.value, required this.color, required this.bg,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color:        Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border:       Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 36, height: 36,
-            decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const Spacer(),
-          Text(value,
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color),
-            maxLines: 1, overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8))),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Weekly Chart (simple bar) ──────────────────────────────────────
+// ── Weekly Chart ───────────────────────────────────────────────────
 class _WeeklyChart extends StatelessWidget {
   final List<Map> weekly;
   const _WeeklyChart({required this.weekly});
@@ -239,201 +109,125 @@ class _WeeklyChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final maxVal = weekly.map((e) => (e['sales'] as num? ?? 0).toDouble()).fold(0.0, (a, b) => a > b ? a : b);
-    if (maxVal == 0) return const SizedBox.shrink();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+    return BarChart(BarChartData(
+      maxY:          maxVal * 1.2,
+      gridData:      FlGridData(show: true, drawVerticalLine: false,
+        getDrawingHorizontalLine: (_) => const FlLine(color: AppTheme.slate100, strokeWidth: 1)),
+      borderData:    FlBorderData(show: false),
+      titlesData: FlTitlesData(
+        leftTitles:   const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        rightTitles:  const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        topTitles:    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        bottomTitles: AxisTitles(sideTitles: SideTitles(
+          showTitles: true, reservedSize: 28,
+          getTitlesWidget: (val, meta) {
+            final i = val.toInt();
+            if (i < 0 || i >= weekly.length) return const SizedBox.shrink();
+            return Padding(padding: const EdgeInsets.only(top: 6),
+              child: Text(weekly[i]['day'] ?? '', style: const TextStyle(fontSize: 10, color: AppTheme.slate400)));
+          },
+        )),
       ),
-      padding: const EdgeInsets.all(16),
-      child: SizedBox(
-        height: 120,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: weekly.map((e) {
-            final sales = (e['sales'] as num? ?? 0).toDouble();
-            final ratio = maxVal > 0 ? sales / maxVal : 0.0;
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 3),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 600),
-                      curve:    Curves.easeOut,
-                      height:   80 * ratio,
-                      decoration: BoxDecoration(
-                        color:        ratio > 0.7
-                            ? const Color(0xFF6366F1)
-                            : const Color(0xFF6366F1).withOpacity(0.4),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(e['day'] ?? '',
-                      style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-}
-
-// ── Invoice Tile ───────────────────────────────────────────────────
-class _InvoiceTile extends StatelessWidget {
-  final Map        invoice;
-  final NumberFormat fmtINR;
-  const _InvoiceTile({required this.invoice, required this.fmtINR});
-
-  Color _statusColor(String? s) {
-    switch (s) {
-      case 'PAID':      return const Color(0xFF10B981);
-      case 'SENT':      return const Color(0xFF3B82F6);
-      case 'CANCELLED': return const Color(0xFFEF4444);
-      default:          return const Color(0xFF94A3B8);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final status   = invoice['status'] as String? ?? 'DRAFT';
-    final customer = invoice['customer'] as Map?;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      decoration: BoxDecoration(
-        color:        Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border:       Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-        leading: Container(
-          width: 40, height: 40,
-          decoration: BoxDecoration(
-            color:        const Color(0xFFEEF2FF),
-            borderRadius: BorderRadius.circular(10),
+      barGroups: weekly.asMap().entries.map((e) {
+        final sales = (e.value['sales'] as num? ?? 0).toDouble();
+        return BarChartGroupData(x: e.key, barRods: [
+          BarChartRodData(
+            toY:         sales,
+            color:       AppTheme.primary,
+            width:       20,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+            gradient: const LinearGradient(colors: [Color(0xFF818CF8), AppTheme.primary],
+              begin: Alignment.topCenter, end: Alignment.bottomCenter),
           ),
-          child: const Icon(Icons.receipt_long_rounded, color: Color(0xFF6366F1), size: 20),
-        ),
-        title: Text(
-          invoice['invoice_no'] ?? '',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, fontFamily: 'monospace'),
-        ),
-        subtitle: Text(
-          customer?['name'] ?? 'Customer',
-          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              fmtINR.format(invoice['total'] ?? 0),
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color:        _statusColor(status).withOpacity(0.12),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                status,
-                style: TextStyle(fontSize: 10, color: _statusColor(status), fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
+        ]);
+      }).toList(),
+      barTouchData: BarTouchData(
+        touchTooltipData: BarTouchTooltipData(
+          getTooltipItem: (group, _, rod, __) => BarTooltipItem(
+            formatINR(rod.toY),
+            const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+          ),
         ),
       ),
-    );
+    ));
   }
 }
 
-// ── Section Header ─────────────────────────────────────────────────
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  const _SectionHeader({required this.title, required this.icon});
+// ── Low Stock Widget ───────────────────────────────────────────────
+class _LowStockWidget extends StatelessWidget {
+  final WidgetRef ref;
+  const _LowStockWidget({required this.ref});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: const Color(0xFF6366F1)),
-        const SizedBox(width: 8),
-        Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
-      ],
-    );
-  }
-}
-
-// ── Dashboard Skeleton ─────────────────────────────────────────────
-class _DashboardSkeleton extends StatelessWidget {
-  const _DashboardSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        GridView.count(
-          crossAxisCount: 2, shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 12, mainAxisSpacing: 12,
-          childAspectRatio: 1.6,
-          children: List.generate(4, (_) => _shimmer(height: 80)),
-        ),
-        const SizedBox(height: 16),
-        _shimmer(height: 160),
-      ],
-    );
-  }
-
-  Widget _shimmer({required double height}) => Container(
-    height: height,
-    decoration: BoxDecoration(
-      color:        const Color(0xFFE2E8F0),
-      borderRadius: BorderRadius.circular(16),
-    ),
-  );
-}
-
-// ── Error Widget ───────────────────────────────────────────────────
-class _ErrorWidget extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorWidget({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+    final low = ref.watch(lowStockReportProvider);
+    return low.when(
+      loading: () => const Skeleton(height: 80),
+      error:   (_, __) => const SizedBox.shrink(),
+      data: (items) => AppCard(
+        padding: EdgeInsets.zero,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.wifi_off_rounded, size: 48, color: Color(0xFFCBD5E1)),
-            const SizedBox(height: 16),
-            const Text('Failed to load data', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
-            const SizedBox(height: 8),
-            Text('Check if backend is running', style: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8))),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Retry'),
+          children: items.take(4).map((item) => ListTile(
+            dense: true,
+            leading: Container(width:36, height:36,
+              decoration: BoxDecoration(color: const Color(0xFFFEF3C7), borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.warning_amber_rounded, color: AppTheme.amber, size: 18)),
+            title: Text(item['name'] ?? '', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+            subtitle: Text('Min: ${item['min_threshold']} ${item['unit']}',
+              style: const TextStyle(fontSize: 11, color: AppTheme.slate400)),
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(color: const Color(0xFFFEF2F2), borderRadius: BorderRadius.circular(8)),
+              child: Text('${item['stock_qty']} left',
+                style: const TextStyle(fontSize: 11, color: AppTheme.red, fontWeight: FontWeight.w700)),
             ),
-          ],
+          )).toList(),
         ),
       ),
     );
   }
+}
+
+// ── Invoice Row ────────────────────────────────────────────────────
+class _InvoiceRow extends StatelessWidget {
+  final Map inv;
+  const _InvoiceRow({required this.inv});
+
+  @override
+  Widget build(BuildContext context) {
+    final status   = inv['status'] as String? ?? 'DRAFT';
+    final customer = inv['customer'] as Map?;
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Row(children: [
+        Container(width:40, height:40,
+          decoration: BoxDecoration(color: AppTheme.indigo50, borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.receipt_long_rounded, color: AppTheme.primary, size: 20)),
+        const SizedBox(width: 12),
+        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(inv['invoice_no'] ?? '', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+          Text(customer?['name'] ?? '', style: const TextStyle(fontSize: 12, color: AppTheme.slate400)),
+        ])),
+        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Text(formatINR(inv['total'] ?? 0), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          StatusBadge(status),
+        ]),
+      ]),
+    );
+  }
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────
+class _Skeleton extends StatelessWidget {
+  const _Skeleton();
+  @override
+  Widget build(BuildContext context) => Column(children: [
+    GridView.count(crossAxisCount: 2, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      crossAxisSpacing: 12, mainAxisSpacing: 12,mainAxisExtent: 110,
+      children: List.generate(4, (_) => const Skeleton(height: 80, radius: 16))),
+    const SizedBox(height: 16),
+    const Skeleton(height: 180, radius: 16),
+  ]);
 }

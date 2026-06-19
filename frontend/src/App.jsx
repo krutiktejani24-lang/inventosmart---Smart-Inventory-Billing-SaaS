@@ -11,6 +11,9 @@ import Customers from './pages/Customers';
 import Vendors   from './pages/Vendors';
 import Reports   from './pages/Reports';
 import Settings  from './pages/Settings';
+import Pricing      from './pages/Pricing';
+import Subscription from './pages/Subscription';
+import Payments from "./pages/Payments";
 
 // Customer portal pages
 import PortalLogin         from './pages/portal/PortalLogin';
@@ -42,6 +45,9 @@ export default function App() {
       <Route path="/vendors"   element={<PrivateRoute><Vendors /></PrivateRoute>} />
       <Route path="/reports"   element={<PrivateRoute><Reports /></PrivateRoute>} />
       <Route path="/settings"  element={<PrivateRoute><Settings /></PrivateRoute>} />
+      <Route path="/pricing"     element={<PrivateRoute><Pricing /></PrivateRoute>} />
+      <Route path="/subscriptions"element={<PrivateRoute><Subscription /></PrivateRoute>}/>
+      <Route path="/payments" element={<PrivateRoute><Payments /></PrivateRoute>}/>
 
       {/* ── Customer Portal Routes ──────────────────────────────── */}
       <Route path="/portal/login"            element={<PortalLogin />} />

@@ -57,7 +57,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
 
     try {
       // Search product by SKU
-      final res      = await apiService.getProducts(search: code);
+      final res      = await api.getProducts(search: code);
       final data     = res.data as Map<String, dynamic>;
       final products = data['products'] as List?;
 

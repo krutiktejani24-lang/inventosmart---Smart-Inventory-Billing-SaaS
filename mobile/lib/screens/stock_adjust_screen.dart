@@ -37,9 +37,9 @@ class _StockAdjustScreenState extends State<StockAdjustScreen> {
       final reason = _reasonCtrl.text.trim();
 
       if (_isStockIn) {
-        await apiService.stockIn(widget.product.id, qty, reason.isEmpty ? 'Manual stock in' : reason);
+        await api.stockIn(widget.product.id, qty, reason.isEmpty ? 'Manual stock in' : reason);
       } else {
-        await apiService.stockOut(widget.product.id, qty, reason.isEmpty ? 'Manual stock out' : reason);
+        await api.stockOut(widget.product.id, qty, reason.isEmpty ? 'Manual stock out' : reason);
       }
 
       if (mounted) {

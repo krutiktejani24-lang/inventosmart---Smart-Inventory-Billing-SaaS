@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../providers/inventory_provider.dart';
-
+import '../services/api_service.dart';
 class InvoiceScreen extends ConsumerStatefulWidget {
   const InvoiceScreen({super.key});
 
