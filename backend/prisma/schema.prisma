@@ -25,6 +25,7 @@ model Business {
   stock_movements StockMovement[]
   users           User[]
   vendors         Vendor[]
+   upi_id String?
 }
 
 model User {
