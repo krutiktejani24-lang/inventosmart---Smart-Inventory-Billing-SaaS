@@ -23,25 +23,20 @@ model Business {
   products        Product[]
   purchase_orders PurchaseOrder[]
   stock_movements StockMovement[]
-  subscription    Subscription?
   users           User[]
   vendors         Vendor[]
-  notifications   Notification[]
-  audit_logs      AuditLog[]
-  payments Payment[]
 }
 
 model User {
-  id          String     @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
-  email       String     @unique
+  email       String   @unique
   password    String
-  role        Role       @default(STAFF)
-  is_active   Boolean    @default(true)
+  role        Role     @default(STAFF)
+  is_active   Boolean  @default(true)
   business_id String
-  audit_logs  AuditLog[]
-  created_at  DateTime   @default(now())
-  business    Business   @relation(fields: [business_id], references: [id])
+  created_at  DateTime @default(now())
+  business    Business @relation(fields: [business_id], references: [id])
 
   @@index([business_id])
 }
@@ -204,48 +199,16 @@ model POItem {
 }
 
 model Payment {
-  id           String   @id @default(cuid())
-  invoice_id   String
-  business_id  String
-  amount       Float
-  method       String
-  reference    String?
-  notes        String?
-  created_at   DateTime @default(now())
-  invoice      Invoice  @relation(fields: [invoice_id], references: [id])
-  business     Business @relation(fields: [business_id], references: [id])
+  id         String   @id @default(cuid())
+  invoice_id String
+  amount     Float
+  method     String   @default("CASH")
+  reference  String?
+  notes      String?
+  created_at DateTime @default(now())
+  invoice    Invoice  @relation(fields: [invoice_id], references: [id])
+
   @@index([invoice_id])
-  @@index([business_id])
-}
-
-model Plan {
-  id            String         @id @default(cuid())
-  name          String         @unique
-  price         Float
-  billing_cycle String
-  max_users     Int
-  max_products  Int
-  max_invoices  Int
-  features      Json?
-  created_at    DateTime       @default(now())
-  subscriptions Subscription[]
-}
-
-model Subscription {
-  id                       String    @id @default(cuid())
-  business_id              String    @unique
-  plan_id                  String
-  razorpay_subscription_id String?
-  razorpay_customer_id     String?
-  status                   String    @default("ACTIVE")
-  start_date               DateTime  @default(now())
-  end_date                 DateTime?
-  created_at               DateTime  @default(now())
-  business                 Business  @relation(fields: [business_id], references: [id])
-  plan                     Plan      @relation(fields: [plan_id], references: [id])
-
-  @@index([business_id])
-  @@index([plan_id])
 }
 
 enum Role {
@@ -257,7 +220,6 @@ enum Role {
 enum InvoiceStatus {
   DRAFT
   SENT
-  PARTIAL
   PAID
   CANCELLED
 }
@@ -272,37 +234,4 @@ enum POStatus {
   PENDING
   RECEIVED
   CANCELLED
-}
-
-model Notification {
-  id          String @id @default(cuid())
-  business_id String
-
-  title   String
-  message String
-
-  is_read Boolean @default(false)
-
-  created_at DateTime @default(now())
-
-  business Business @relation(fields: [business_id], references: [id])
-
-  @@index([business_id])
-}
-
-model AuditLog {
-  id          String @id @default(cuid())
-  business_id String
-  user_id     String
-
-  action String
-  module String
-
-  created_at DateTime @default(now())
-
-  business Business @relation(fields: [business_id], references: [id])
-  user     User     @relation(fields: [user_id], references: [id])
-
-  @@index([business_id])
-  @@index([user_id])
 }

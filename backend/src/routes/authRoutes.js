@@ -107,11 +107,11 @@ router.post('/team', protect, allow('ADMIN'), async (req, res) => {
 router.put('/business', protect, allow('ADMIN'), async (req, res) => {
   const { PrismaClient } = require('@prisma/client');
   const prisma = new PrismaClient();
-  const { name, gstin, phone, email, address, upi_id } = req.body;
+  const { name, gstin, phone, email, address } = req.body;
   try {
     const business = await prisma.business.update({
       where: { id: req.user.businessId },
-      data: { name, gstin, phone, email, address, upi_id: upi_id || null },
+      data: { name, gstin, phone, email, address: address || null },
     });
     res.json({ message: 'Business updated', business });
   } catch(e) {

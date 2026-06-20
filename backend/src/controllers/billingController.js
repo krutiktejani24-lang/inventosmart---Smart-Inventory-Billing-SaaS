@@ -178,7 +178,7 @@ const getUPIQR = async (req, res) => {
     });
     if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
 
-    const upiId = invoice.business?.upi_id;
+   const upiId = null;
     if (!upiId)
       return res.status(400).json({ message: 'UPI ID not configured. Set it in Settings → Business Profile.' });
 

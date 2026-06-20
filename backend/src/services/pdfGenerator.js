@@ -141,7 +141,7 @@ const generateInvoicePDF = (invoice) => {
 
       /* ── UPI QR SECTION ── */
       y += 30;
-      const upiId  = business.upi_id || invoice.upiId || null;
+      const upiId = null;
       const hasUPI = !!(upiId && upiId.trim() && generateUPIQR);
 
       if (hasUPI) {
