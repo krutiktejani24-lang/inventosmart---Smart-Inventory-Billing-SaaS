@@ -17,7 +17,6 @@ model Business {
   logo_url        String?
   plan            String          @default("free")
   created_at      DateTime        @default(now())
-  upi_id          String?
   categories      Category[]
   customers       Customer[]
   invoices        Invoice[]
