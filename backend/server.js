@@ -13,13 +13,19 @@ require('./src/routes/auditLogRoutes');
 const paymentRoutes = require("./src/routes/paymentRoutes");  
 
 // ── Core Middleware ───────────────────────────────────────────────────
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://inventosmart-smart-inventory-billing-saa-ipl1imuw4.vercel.app"
+];
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://inventosmart-smart-inventory-billin.vercel.app'
-  ],
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS Not Allowed"));
+    }
+  },
+  credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
