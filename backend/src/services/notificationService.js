@@ -11,10 +11,14 @@ const createNotification = async (businessId, title, message) => {
   });
 };
 
-exports.getNotifications = async (req, res) => {
-  return res.json({
-    success: true,
-    data: []
+const getNotifications = async (businessId) => {
+  return prisma.notification.findMany({
+    where: {
+      business_id: businessId,
+    },
+    orderBy: {
+      created_at: 'desc',
+    },
   });
 };
 
@@ -30,10 +34,12 @@ const markAsRead = async (id, businessId) => {
   });
 };
 
-exports.getUnreadCount = async (req, res) => {
-  return res.json({
-    success: true,
-    count: 0
+const getUnreadCount = async (businessId) => {
+  return prisma.notification.count({
+    where: {
+      business_id: businessId,
+      is_read: false,
+    },
   });
 };
 
