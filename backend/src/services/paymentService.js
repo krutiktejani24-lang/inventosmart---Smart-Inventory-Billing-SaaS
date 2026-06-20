@@ -2,6 +2,10 @@
 
   const prisma = new PrismaClient();
 
+  const notificationService =
+
+require("./notificationService");
+
   /* -----------------------------
     Create Payment
   ----------------------------- */
@@ -19,6 +23,11 @@
   },
 });
 
+   await notificationService.createNotification(
+    businessId,
+    "Payment Received",
+    `₹${data.amount} received via ${data.method}`
+  );
     return payment;
   };
 

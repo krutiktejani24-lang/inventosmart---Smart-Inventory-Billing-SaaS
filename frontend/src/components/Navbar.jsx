@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../api/axiosConfig';
 import { Menu, Bell, X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import LanguageSwitcher from './LanguageSwitcher';
@@ -7,6 +8,22 @@ import useAuthStore from '../store/authStore';
 export default function Navbar({ title }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuthStore();
+  const [notifications, setNotifications] = useState([]);
+const [showNotifications, setShowNotifications] = useState(false);
+
+
+useEffect(() => {
+  loadNotifications();
+}, []);
+
+const loadNotifications = async () => {
+  try {
+    const res = await api.get("/notifications");
+    setNotifications(res.data.data || []);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <>
@@ -24,10 +41,61 @@ export default function Navbar({ title }) {
 
         <LanguageSwitcher />
 
-        <button className="relative p-1.5 rounded-lg hover:bg-slate-100 text-slate-500">
-          <Bell size={18} />
-          <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500" />
-        </button>
+        <div className="relative">
+
+  <button
+    onClick={() =>
+      setShowNotifications(!showNotifications)
+    }
+    className="relative p-1.5 rounded-lg hover:bg-slate-100 text-slate-500"
+  >
+    <Bell size={18} />
+
+    {notifications.length > 0 && (
+      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] px-1 rounded-full">
+        {notifications.length}
+      </span>
+    )}
+  </button>
+
+  {showNotifications && (
+    <div className="absolute right-0 mt-2 w-96 bg-white border rounded-xl shadow-xl z-50">
+
+      <div className="p-4 border-b font-semibold">
+        Notifications
+      </div>
+
+      {notifications.length === 0 ? (
+        <p className="p-4 text-slate-500">
+          No Notifications
+        </p>
+      ) : (
+        notifications.map((n) => (
+          <div
+            key={n.id}
+            className="p-4 border-b hover:bg-slate-50"
+          >
+            <p className="font-medium">
+              {n.title}
+            </p>
+
+            <p className="text-sm text-slate-500">
+              {n.message}
+            </p>
+
+            <p className="text-xs text-slate-400 mt-1">
+              {new Date(
+                n.created_at
+              ).toLocaleString()}
+            </p>
+          </div>
+        ))
+      )}
+
+    </div>
+  )}
+
+</div>
 
         <div className="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center text-white text-xs font-semibold cursor-pointer">
           {user?.name?.charAt(0)?.toUpperCase() || 'U'}
