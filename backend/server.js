@@ -18,14 +18,18 @@ const allowedOrigins = [
   "https://inventosmart-smart-inventory-billing-saa-ipl1imuw4.vercel.app"
 ];
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
+  origin: (origin, callback) => {
+    if (
+      !origin ||
+      origin === "http://localhost:5173" ||
+      origin.includes(".vercel.app")
+    ) {
       callback(null, true);
     } else {
       callback(new Error("CORS Not Allowed"));
     }
   },
-  credentials: true
+  credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
