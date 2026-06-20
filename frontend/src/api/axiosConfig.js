@@ -5,7 +5,7 @@ import useAuthStore from '../store/authStore';
  * Axios instance — base URL .env thi, JWT auto-attach, 401 pe auto logout
  */
 const api = axios.create({
-  baseURL: "https://inventosmart-smart-inventory-billing-saas.onrender.com",
+  baseURL: "https://inventosmart-smart-inventory-billing-saas.onrender.com/api",
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
