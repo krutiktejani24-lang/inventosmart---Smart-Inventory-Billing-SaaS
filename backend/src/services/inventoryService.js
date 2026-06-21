@@ -118,12 +118,7 @@ const createProduct = async (businessId, data) => {
       business_id: businessId,
     },
     include: {
-      category: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
+      category: true,
     },
   });
 
@@ -137,43 +132,6 @@ const createProduct = async (businessId, data) => {
 
   return product;
 };
-
-  const sku = data.sku || await generateSKU(businessId, data.name);
-
-  const product = await prisma.product.create({
-  data: {
-    name: data.name,
-    sku,
-    hsn_code: data.hsn_code || null,
-    description: data.description || null,
-    price: Number(data.price) || 0,
-    cost_price: Number(data.cost_price) || 0,
-    stock_qty: parseInt(data.stock_qty) || 0,
-    min_threshold: parseInt(data.min_threshold) || 5,
-    unit: data.unit || 'Pcs',
-    gst_rate: Number(data.gst_rate) || 18,
-    image_url: data.image_url || null,
-    category_id: data.category_id || null,
-    is_active: true,
-    business_id: businessId,
-  },
-  include: {
-    category: {
-      select: {
-        id: true,
-        name: true,
-      },
-    },
-  },
-});
-
-if (product.stock_qty <= product.min_threshold) {
-  await createNotification(
-    businessId,
-    'Low Stock Alert',
-    `${product.name} stock is below threshold`
-  );
-}
 /**
  * Update product
  */
