@@ -137,30 +137,6 @@ const createProduct = async (businessId, data) => {
 
   return product;
 };
-  /* const subscription = await prisma.subscription.findFirst({
-  where: {
-    business_id: businessId,
-    status: 'ACTIVE'
-  },
-  include: {
-    plan: true
-  }
-});
-
-const productCount = await prisma.product.count({
-  where: {
-    business_id: businessId,
-    is_active: true
-  }
-});
-
-if (
-  subscription?.plan?.max_products !== -1 &&
-  productCount >= subscription.plan.max_products
-) {
-  throw new Error(
-    `Product limit reached. Upgrade your plan.`
-  );*/
 
   const sku = data.sku || await generateSKU(businessId, data.name);
 
