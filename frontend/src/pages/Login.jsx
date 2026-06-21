@@ -7,7 +7,7 @@ import useAuthStore from '../store/authStore';
 import api from '../api/axiosConfig';
 
 export default function Login() {
-  const [tab,      setTab]      = useState('login'); // 'login' | 'register'
+  const [tab,      setTab]      = useState('login'); 
   const [showPass, setShowPass] = useState(false);
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState('');

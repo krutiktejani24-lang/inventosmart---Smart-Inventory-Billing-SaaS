@@ -1,7 +1,11 @@
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-const createNotification = async (businessId, title, message) => {
+const createNotification = async (
+  businessId,
+  title,
+  message
+) => {
   return prisma.notification.create({
     data: {
       business_id: businessId,
@@ -17,12 +21,15 @@ const getNotifications = async (businessId) => {
       business_id: businessId,
     },
     orderBy: {
-      created_at: 'desc',
+      created_at: "desc",
     },
   });
 };
 
-const markAsRead = async (id, businessId) => {
+const markAsRead = async (
+  id,
+  businessId
+) => {
   return prisma.notification.updateMany({
     where: {
       id,
@@ -34,7 +41,9 @@ const markAsRead = async (id, businessId) => {
   });
 };
 
-const getUnreadCount = async (businessId) => {
+const getUnreadCount = async (
+  businessId
+) => {
   return prisma.notification.count({
     where: {
       business_id: businessId,
