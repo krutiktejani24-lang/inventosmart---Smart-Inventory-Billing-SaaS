@@ -13,7 +13,7 @@ exports.createAuditLog = async (
       business_id: businessId,
       user_id: userId,
       action,
-      module,
+      details: module,
     },
   });
 };
