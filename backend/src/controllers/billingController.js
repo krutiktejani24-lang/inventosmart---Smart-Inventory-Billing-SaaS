@@ -202,11 +202,11 @@ if (!invoice) {
 
 const upiId = invoice.business?.upi_id;
 
-if (!upiId || !upiId.includes('@')) {
+if (!upiId) {
   return res.status(400).json({
     message: 'UPI ID not configured. Set it in Settings → Business Profile.'
   });
-} 
+}
 
     let generateUPIQRBase64;
     try {
