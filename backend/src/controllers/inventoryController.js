@@ -75,12 +75,16 @@ const createProduct = async (req, res) => {
       category_id:   category_id || null,
     });
 
-     await createAuditLog(
-        req.user.businessId,
-        req.user.userId,
-        'Created Product',
-        'Inventory'
-      );
+try {
+  await createAuditLog(
+    businessId,
+    req.user?.id,
+    'CREATE_PRODUCT',
+    'INVENTORY'
+  );
+} catch (err) {
+  console.log('Audit Log Error:', err.message);
+}
 
     return res.status(201).json({ message: 'Product created', product });
   } catch (err) {
