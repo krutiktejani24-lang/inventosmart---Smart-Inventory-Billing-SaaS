@@ -221,6 +221,14 @@ model Notification {
   created_at  DateTime @default(now())
 }
 
+model AuditLog {
+  id          String   @id @default(cuid())
+  business_id String
+  user_id     String?
+  action      String
+  details     String?
+  created_at  DateTime @default(now())
+}
 enum Role {
   ADMIN
   MANAGER
