@@ -173,14 +173,40 @@ const getUPIQR = async (req, res) => {
     const prisma = new PrismaClient();
 
     const invoice = await prisma.invoice.findFirst({
-      where:   { id: req.params.id, business_id: req.user.businessId },
-      include: { business: true },
-    });
-    if (!invoice) return res.status(404).json({ message: 'Invoice not found' });
 
-   const upiId = null;
-    if (!upiId)
-      return res.status(400).json({ message: 'UPI ID not configured. Set it in Settings → Business Profile.' });
+  where: {
+
+    id: req.params.id,
+
+    business_id: req.user.businessId,
+
+  },
+
+  include: {
+
+    business: true,
+
+  },
+
+});
+
+if (!invoice) {
+
+  return res.status(404).json({
+
+    message: 'Invoice not found',
+
+  });
+
+}
+
+const upiId = invoice.business?.upi_id;
+
+if (!upiId || !upiId.includes('@')) {
+  return res.status(400).json({
+    message: 'UPI ID not configured. Set it in Settings → Business Profile.'
+  });
+} 
 
     let generateUPIQRBase64;
     try {
