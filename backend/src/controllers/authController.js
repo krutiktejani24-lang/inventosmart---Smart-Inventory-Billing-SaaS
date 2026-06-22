@@ -234,7 +234,8 @@ const updateBusiness = async (req, res) => {
       gstin,
       phone,
       email,
-      address
+      address,
+      upi_id
     } = req.body;
 
     const business = await prisma.business.update({
@@ -244,7 +245,8 @@ const updateBusiness = async (req, res) => {
         gstin,
         phone,
         email,
-        address
+        address,
+        upi_id
       }
     });
 
