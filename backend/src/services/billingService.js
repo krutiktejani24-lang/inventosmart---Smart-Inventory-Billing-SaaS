@@ -1,9 +1,7 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/prisma');
 const { calculateInvoiceTotals } = require('./gstEngine');
 const pdfGenerator = require('./pdfGenerator');
 const nodemailer                 = require('nodemailer');
-
-const prisma = new PrismaClient();
 
 /* ─────────────────────────────────────────────────────────────────────
    AUTO INVOICE NUMBER — INV-2025-0001

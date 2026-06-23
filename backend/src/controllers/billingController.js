@@ -132,9 +132,9 @@ const recordPayment = async (req, res) => {
 ───────────────────────────────────────────────────────────────────── */
 const getWhatsAppLink = async (req, res) => {
   try {
-    const { PrismaClient } = require('@prisma/client');
+    const prisma = require('../config/prisma');
     const { buildWhatsAppMessage, buildWhatsAppURL } = require('../utils/whatsappHelper');
-    const prisma = new PrismaClient();
+    
 
     const invoice = await prisma.invoice.findFirst({
       where:   { id: req.params.id, business_id: req.user.businessId },
@@ -169,13 +169,12 @@ const getWhatsAppLink = async (req, res) => {
 ───────────────────────────────────────────────────────────────────── */
 const getUPIQR = async (req, res) => {
   try {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+   const prisma = require('../config/prisma');
 
     const invoice = await prisma.invoice.findFirst({
 
   where: {
-
+          
     id: req.params.id,
 
     business_id: req.user.businessId,

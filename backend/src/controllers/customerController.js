@@ -1,8 +1,6 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/prisma');
 const { validationResult } = require('express-validator');
 const { paginate, paginationMeta } = require('../utils/helpers');
-
-const prisma = new PrismaClient();
 
 const validate = (req, res) => {
   const errors = validationResult(req);

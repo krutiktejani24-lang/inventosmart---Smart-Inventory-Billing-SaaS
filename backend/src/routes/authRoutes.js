@@ -72,8 +72,7 @@ router.post('/change-password', protect, changePasswordRules, changePassword);
 
 // Team management (Settings page)
 router.get('/team',  protect, allow('ADMIN'), async (req, res) => {
-  const { PrismaClient } = require('@prisma/client');
-  const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
   try {
     const users = await prisma.user.findMany({
       where: { business_id: req.user.businessId },
@@ -85,9 +84,9 @@ router.get('/team',  protect, allow('ADMIN'), async (req, res) => {
 });
 
 router.post('/team', protect, allow('ADMIN'), async (req, res) => {
-  const { PrismaClient } = require('@prisma/client');
+  const prisma = require('../config/prisma');
   const bcrypt = require('bcryptjs');
-  const prisma = new PrismaClient();
+  const prisma = require('../config/prisma');
   const { name, email, password, role } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'name, email, password required' });
   try {
@@ -105,8 +104,7 @@ router.post('/team', protect, allow('ADMIN'), async (req, res) => {
 
 // Business profile update
 router.put('/business', protect, allow('ADMIN'), async (req, res) => {
-  const { PrismaClient } = require('@prisma/client');
-  const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
   const { name, gstin, phone, email, address } = req.body;
   try {
     const business = await prisma.business.update({
