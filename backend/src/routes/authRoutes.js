@@ -73,7 +73,6 @@ router.post('/change-password', protect, changePasswordRules, changePassword);
 
 // Team management (Settings page)
 router.get('/team',  protect, allow('ADMIN'), async (req, res) => {
-const prisma = require('../config/prisma');
   try {
     const users = await prisma.user.findMany({
       where: { business_id: req.user.businessId },
@@ -103,11 +102,11 @@ router.post('/team', protect, allow('ADMIN'), async (req, res) => {
 
 // Business profile update
 router.put('/business', protect, allow('ADMIN'), async (req, res) => {
-  const { name, gstin, phone, email, address } = req.body;
+  const { name, gstin, phone, email, address, upi_id } = req.body;
   try {
     const business = await prisma.business.update({
       where: { id: req.user.businessId },
-      data: { name, gstin, phone, email, address: address || null },
+      data: { name, gstin, phone, email, address, upi_id: upi_id || null },
     });
     res.json({ message: 'Business updated', business });
   } catch(e) {
