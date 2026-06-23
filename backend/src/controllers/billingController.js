@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const service = require('../services/billingService');
+   const prisma = require('../config/prisma');
 
 const validate = (req, res) => {
   const errors = validationResult(req);
@@ -132,7 +133,6 @@ const recordPayment = async (req, res) => {
 ───────────────────────────────────────────────────────────────────── */
 const getWhatsAppLink = async (req, res) => {
   try {
-    const prisma = require('../config/prisma');
     const { buildWhatsAppMessage, buildWhatsAppURL } = require('../utils/whatsappHelper');
     
 
@@ -169,8 +169,6 @@ const getWhatsAppLink = async (req, res) => {
 ───────────────────────────────────────────────────────────────────── */
 const getUPIQR = async (req, res) => {
   try {
-   const prisma = require('../config/prisma');
-
     const invoice = await prisma.invoice.findFirst({
 
   where: {

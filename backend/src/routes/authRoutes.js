@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const { body } = require('express-validator');
+const prisma = require('../config/prisma');
 const {
   register,
   login,
@@ -84,9 +85,7 @@ const prisma = require('../config/prisma');
 });
 
 router.post('/team', protect, allow('ADMIN'), async (req, res) => {
-  const prisma = require('../config/prisma');
   const bcrypt = require('bcryptjs');
-  const prisma = require('../config/prisma');
   const { name, email, password, role } = req.body;
   if (!name || !email || !password) return res.status(400).json({ message: 'name, email, password required' });
   try {
@@ -104,7 +103,6 @@ router.post('/team', protect, allow('ADMIN'), async (req, res) => {
 
 // Business profile update
 router.put('/business', protect, allow('ADMIN'), async (req, res) => {
-const prisma = require('../config/prisma');
   const { name, gstin, phone, email, address } = req.body;
   try {
     const business = await prisma.business.update({
