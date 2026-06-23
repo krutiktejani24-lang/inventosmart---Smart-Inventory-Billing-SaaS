@@ -12,7 +12,6 @@ require("./notificationService");
     const payment = await prisma.payment.create({
   data: {
     invoice_id: data.invoiceId,
-    business_id: businessId,
     amount: Number(data.amount),
     method: data.method,
     reference: data.reference || null,
