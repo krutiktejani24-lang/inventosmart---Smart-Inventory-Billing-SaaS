@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { PrismaClient } = require('@prisma/client');
 const { validationResult } = require('express-validator');
 
-const prisma = new PrismaClient();
+const prisma = require('../config/prisma');
 
 /**
  * Token generate karo
@@ -184,6 +184,7 @@ const getMe = async (req, res) => {
            email: true,
             logo_url: true,
             plan: true,
+            upi_id: true,
           },
 
         },
@@ -229,26 +230,23 @@ const changePassword = async (req, res) => {
 
 const updateBusiness = async (req, res) => {
   try {
-    const {
-      name,
-      gstin,
-      phone,
-      email,
-      address,
-      upi_id
-    } = req.body;
+
+    console.log("REQ USER:", req.user);
+    console.log("REQ BODY:", req.body);
 
     const business = await prisma.business.update({
       where: { id: req.user.businessId },
       data: {
-        name,
-        gstin,
-        phone,
-        email,
-        address,
-        upi_id
+        name: req.body.name,
+        gstin: req.body.gstin,
+        phone: req.body.phone,
+        email: req.body.email,
+        address: req.body.address,
+        upi_id: req.body.upi_id
       }
     });
+
+    console.log("UPDATED BUSINESS:", business);
 
     return res.status(200).json({
       message: 'Business updated successfully',
@@ -258,7 +256,7 @@ const updateBusiness = async (req, res) => {
   } catch (err) {
     console.error('[updateBusiness]', err);
     return res.status(500).json({
-      message: 'Failed to update business'
+      message: err.message
     });
   }
 };
